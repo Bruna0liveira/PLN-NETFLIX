@@ -131,14 +131,27 @@ def detectar_outliers(coluna: str, metodo: str = "iqr") -> dict:
         }
 
     elif metodo == "zscore":
-        # TODO (alunos): implementar a detecção por z-score.
-        #
+
         # Passos:
         #   1. Calcular média e desvio-padrão da série.
         #   2. Calcular o z-score para cada valor: z = (x - media) / std
         #   3. Considerar outliers aqueles com |z| > 3.
         #   4. Retornar dict no mesmo formato do método 'iqr' acima
         #      (adapte os campos para refletir z-score: limite_z, etc).
-        return {"erro": "Método z-score ainda não implementado. Veja o TODO no código."}
+        media = serie.mean()
+        std = serie.std()
+        zscores = (serie - media) / std
+        outliers = serie[abs(zscores) > 3]
+
+        return {
+            "coluna": coluna,
+            "metodo": "zscore",
+            "media": round(float(media), 3),
+            "desvio_padrao": round(float(std), 3),
+            "limite_z": 3,
+            "total_outliers": int(len(outliers)),
+            "porcentagem": round(len(outliers) / len(serie) * 100, 2),
+            "exemplos": [round(float(v), 3) for v in outliers.head(5).tolist()],
+        }
 
     return {"erro": f"Método '{metodo}' não reconhecido."}
