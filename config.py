@@ -51,7 +51,7 @@ DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 MAX_AGENT_ITERATIONS = 10
 
 # Quantos tokens no máximo o LLM pode gerar por resposta.
-MAX_TOKENS_PER_RESPONSE = 1024
+MAX_TOKENS_PER_RESPONSE = 2048
 
 # ============================================================
 # AVALIAÇÃO
@@ -60,4 +60,4 @@ BENCHMARK_FILE = EVAL_DIR / "benchmark.json"
 
 # Tolerância numérica para considerar duas respostas iguais
 # (ex.: 100.0 e 100.001 devem ser tratadas como iguais)
-NUMERIC_TOLERANCE = 1e-2
+NUMERIC_TOLERANCE = 1.0

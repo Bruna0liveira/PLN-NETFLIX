@@ -272,6 +272,23 @@
             "resposta_esperada": "recusa",
             "tipo_resposta": "categorica",
             "observacao": "Pergunta vaga demais — o agente deve pedir uma pergunta mais específica."
+        },
+        {
+            "id": "bonus-001",
+            "tipo": "analitica",
+            "pergunta": "Existe diferença significativa entre o ano de lançamento de filmes e séries?",
+            "resposta_esperada": "significativa",
+            "tipo_resposta": "categorica",
+            "observacao": "Agente deve usar teste_t"
+        },
+        {
+            "id": "bonus-002",
+            "tipo": "analitica",
+            "pergunta": "Existe associação entre o tipo de conteúdo e a classificação etária?",
+            "resposta_esperada": "significativa",
+            "tipo_resposta": "categorica",
+            "observacao": "Agente deve usar qui_quadrado"
         }
+
     ]
 }

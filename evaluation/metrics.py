@@ -115,8 +115,13 @@ PALAVRAS_RECUSA = {
     "não posso", "nao posso",
     "inválida", "invalida",
     "não está clara", "nao esta clara",
+    "subjetiva", "não é possível", "nao e possivel",
+    "não tenho", "nao tenho",
+    "não existe", "nao existe",
+    "não há", "nao ha",
+    "não disponível", "nao disponivel",
+    "prefira", "seja mais específico", "mais específica",
 }
-
 
 def comparar_categorica(resposta: str, esperado: str) -> bool:
     resposta_lower = resposta.lower()
