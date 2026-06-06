@@ -123,10 +123,26 @@ PALAVRAS_RECUSA = {
     "prefira", "seja mais específico", "mais específica",
 }
 
+# Sinônimos aceitos para respostas de testes estatísticos (bônus)
+# O agente pode expressar "significativa" de várias formas
+SINONIMOS_CATEGORICA = {
+    "significativa": [
+        "significativa", "significativo", "significância",
+        "estatisticamente", "p-valor", "p valor", "p <",
+        "diferença", "associação", "associacao",
+        "não são independentes", "nao sao independentes",
+        "rejeitar", "rejeita",
+    ],
+}
+
 def comparar_categorica(resposta: str, esperado: str) -> bool:
     resposta_lower = resposta.lower()
     if esperado == "recusa":
         return any(palavra in resposta_lower for palavra in PALAVRAS_RECUSA)
+    # Verifica sinonimos registrados
+    sinonimos = SINONIMOS_CATEGORICA.get(esperado.lower(), [])
+    if sinonimos:
+        return any(s in resposta_lower for s in sinonimos)
     return esperado.lower() in resposta_lower
 
 

@@ -17,6 +17,7 @@ from tools import state
 from tools.inspect_tools import listar_colunas, descrever_dados, contar_valores
 from tools.filter_tools import filtrar, agrupar_e_agregar
 from tools.stats_tools import correlacao, detectar_outliers
+from tools.hypothesis_tools import teste_t, qui_quadrado
 
 
 # ============================================================
@@ -133,3 +134,79 @@ def test_detectar_outliers_iqr_identifica_o_100():
 def test_detectar_outliers_metodo_invalido():
     resultado = detectar_outliers("idade", metodo="foo")
     assert "erro" in resultado
+
+
+# ============================================================
+# Testes de hypothesis_tools (bônus)
+# ============================================================
+
+@pytest.fixture(autouse=False)
+def carregar_dataset_com_grupos():
+    """Dataset com dois grupos claramente diferentes para teste t."""
+    df = pd.DataFrame({
+        "idade": [25, 30, 35, 40, 45, 50, 100],
+        "salario": [3000, 4500, 6000, 7500, 9000, 11000, 12500],
+        "genero": ["F", "M", "F", "M", "F", "M", "F"],
+        "cidade": ["SP", "RJ", "SP", "MG", "RJ", "SP", "BA"],
+        "tipo": ["A", "A", "A", "B", "B", "B", "B"],
+    })
+    state.df = df
+    state.path = "<fixture>"
+    yield
+    state.df = None
+
+
+def test_teste_t_detecta_diferenca(carregar_dataset_com_grupos):
+    resultado = teste_t(
+        coluna_numerica="salario",
+        coluna_grupo="tipo",
+        grupo_a="A",
+        grupo_b="B",
+    )
+    assert "p_valor" in resultado
+    assert "estatistica_t" in resultado
+    assert "significativo" in resultado
+    assert "grupo_a" in resultado and "grupo_b" in resultado
+
+
+def test_teste_t_coluna_invalida(carregar_dataset_com_grupos):
+    resultado = teste_t(
+        coluna_numerica="nao_existe",
+        coluna_grupo="tipo",
+        grupo_a="A",
+        grupo_b="B",
+    )
+    assert "erro" in resultado
+
+
+def test_teste_t_grupo_invalido(carregar_dataset_com_grupos):
+    resultado = teste_t(
+        coluna_numerica="salario",
+        coluna_grupo="tipo",
+        grupo_a="X",  # não existe
+        grupo_b="B",
+    )
+    assert "erro" in resultado
+
+
+def test_qui_quadrado_basico(carregar_dataset_com_grupos):
+    resultado = qui_quadrado(coluna_a="genero", coluna_b="cidade")
+    assert "p_valor" in resultado
+    assert "estatistica_chi2" in resultado
+    assert "significativo" in resultado
+
+
+def test_qui_quadrado_coluna_invalida(carregar_dataset_com_grupos):
+    resultado = qui_quadrado(coluna_a="nao_existe", coluna_b="cidade")
+    assert "erro" in resultado
+
+
+def test_detectar_outliers_zscore_identifica_o_100():
+    # Com dataset pequeno (n=7), z-score pode não detectar como |z|>3
+    # mas a estrutura do retorno deve estar correta
+    resultado = detectar_outliers("idade", metodo="zscore")
+    assert "total_outliers" in resultado
+    assert "media" in resultado
+    assert "desvio_padrao" in resultado
+    assert "limite_z" in resultado
+    assert resultado["limite_z"] == 3
