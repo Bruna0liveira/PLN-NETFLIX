@@ -25,3 +25,4 @@ from . import plot_tools      # gerar_grafico
 
 # TODO (alunos): se criarem novos arquivos de tools, adicionem o import aqui.
 # from . import minha_tool_extra
+from . import hypothesis_tools  # teste_t, qui_quadrado

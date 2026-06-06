@@ -1,12 +1,11 @@
 {
     "_observacao": "Benchmark com 30 perguntas para o dataset Netflix (netflix_titles.csv). Distribuição: 10 factuais simples, 15 analíticas multi-tool, 5 ambíguas/inválidas.",
-
     "perguntas": [
         {
             "id": "fat-001",
             "tipo": "factual",
             "pergunta": "Quantas linhas tem o dataset?",
-            "resposta_esperada": null,
+            "resposta_esperada": 8807,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null pelo total de linhas do CSV: len(df)"
         },
@@ -14,7 +13,20 @@
             "id": "fat-002",
             "tipo": "factual",
             "pergunta": "Quais são as colunas do dataset?",
-            "resposta_esperada": ["show_id", "type", "title", "director", "cast", "country", "date_added", "release_year", "rating", "duration", "listed_in", "description"],
+            "resposta_esperada": [
+                "show_id",
+                "type",
+                "title",
+                "director",
+                "cast",
+                "country",
+                "date_added",
+                "release_year",
+                "rating",
+                "duration",
+                "listed_in",
+                "description"
+            ],
             "tipo_resposta": "lista_strings",
             "observacao": "Colunas do netflix_titles.csv"
         },
@@ -22,7 +34,7 @@
             "id": "fat-003",
             "tipo": "factual",
             "pergunta": "Quantos filmes existem no dataset?",
-            "resposta_esperada": null,
+            "resposta_esperada": 6131,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df[df['type']=='Movie'].shape[0]"
         },
@@ -30,7 +42,7 @@
             "id": "fat-004",
             "tipo": "factual",
             "pergunta": "Quantas séries de TV existem no dataset?",
-            "resposta_esperada": null,
+            "resposta_esperada": 2676,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df[df['type']=='TV Show'].shape[0]"
         },
@@ -38,7 +50,7 @@
             "id": "fat-005",
             "tipo": "factual",
             "pergunta": "Qual é a classificação etária mais comum no dataset?",
-            "resposta_esperada": null,
+            "resposta_esperada": "TV-MA",
             "tipo_resposta": "categorica",
             "observacao": "Substituir null por: df['rating'].mode()[0]"
         },
@@ -46,7 +58,7 @@
             "id": "fat-006",
             "tipo": "factual",
             "pergunta": "Qual é o ano de lançamento mais antigo no dataset?",
-            "resposta_esperada": null,
+            "resposta_esperada": 1925,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df['release_year'].min()"
         },
@@ -54,7 +66,7 @@
             "id": "fat-007",
             "tipo": "factual",
             "pergunta": "Qual é o ano de lançamento mais recente no dataset?",
-            "resposta_esperada": null,
+            "resposta_esperada": 2021,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df['release_year'].max()"
         },
@@ -62,7 +74,7 @@
             "id": "fat-008",
             "tipo": "factual",
             "pergunta": "Quantos valores nulos existem na coluna director?",
-            "resposta_esperada": null,
+            "resposta_esperada": 2634,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df['director'].isna().sum()"
         },
@@ -70,7 +82,7 @@
             "id": "fat-009",
             "tipo": "factual",
             "pergunta": "Quantos países diferentes estão presentes no dataset?",
-            "resposta_esperada": null,
+            "resposta_esperada": 748,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df['country'].nunique()"
         },
@@ -78,7 +90,7 @@
             "id": "fat-010",
             "tipo": "factual",
             "pergunta": "Qual é o país que mais produziu conteúdo na Netflix?",
-            "resposta_esperada": null,
+            "resposta_esperada": "United States",
             "tipo_resposta": "categorica",
             "observacao": "Substituir null por: df['country'].value_counts().index[0]"
         },
@@ -86,7 +98,10 @@
             "id": "ana-001",
             "tipo": "analitica",
             "pergunta": "Qual a distribuição de conteúdo por tipo? Quantos filmes e quantas séries existem?",
-            "resposta_esperada": null,
+            "resposta_esperada": {
+                "Movie": 6131,
+                "TV Show": 2676
+            },
             "tipo_resposta": "dict_numerico",
             "observacao": "Substituir null por: df['type'].value_counts().to_dict()"
         },
@@ -94,7 +109,13 @@
             "id": "ana-002",
             "tipo": "analitica",
             "pergunta": "Quais são os 5 países que mais produziram conteúdo na Netflix?",
-            "resposta_esperada": null,
+            "resposta_esperada": [
+                "United States",
+                "India",
+                "United Kingdom",
+                "Japan",
+                "South Korea"
+            ],
             "tipo_resposta": "lista_strings",
             "observacao": "Substituir null por: df['country'].value_counts().head(5).index.tolist()"
         },
@@ -102,7 +123,7 @@
             "id": "ana-003",
             "tipo": "analitica",
             "pergunta": "Quantos títulos foram adicionados à Netflix a partir de 2019?",
-            "resposta_esperada": null,
+            "resposta_esperada": 2575,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df[df['release_year'] >= 2019].shape[0]"
         },
@@ -110,7 +131,7 @@
             "id": "ana-004",
             "tipo": "analitica",
             "pergunta": "Qual a média do ano de lançamento dos filmes?",
-            "resposta_esperada": null,
+            "resposta_esperada": 2013.12,
             "tipo_resposta": "numero_float",
             "observacao": "Substituir null por: round(df[df['type']=='Movie']['release_year'].mean(), 2)"
         },
@@ -118,7 +139,13 @@
             "id": "ana-005",
             "tipo": "analitica",
             "pergunta": "Quais são os 5 gêneros mais comuns no dataset?",
-            "resposta_esperada": null,
+            "resposta_esperada": [
+                "Dramas, International Movies",
+                "Documentaries",
+                "Stand-Up Comedy",
+                "Comedies, Dramas, International Movies",
+                "Dramas, Independent Movies, International Movies"
+            ],
             "tipo_resposta": "lista_strings",
             "observacao": "Substituir null por: df['listed_in'].value_counts().head(5).index.tolist()"
         },
@@ -126,7 +153,7 @@
             "id": "ana-006",
             "tipo": "analitica",
             "pergunta": "Qual classificação etária aparece mais em filmes?",
-            "resposta_esperada": null,
+            "resposta_esperada": "TV-MA",
             "tipo_resposta": "categorica",
             "observacao": "Substituir null por: df[df['type']=='Movie']['rating'].mode()[0]"
         },
@@ -134,7 +161,7 @@
             "id": "ana-007",
             "tipo": "analitica",
             "pergunta": "Qual classificação etária aparece mais em séries de TV?",
-            "resposta_esperada": null,
+            "resposta_esperada": "TV-MA",
             "tipo_resposta": "categorica",
             "observacao": "Substituir null por: df[df['type']=='TV Show']['rating'].mode()[0]"
         },
@@ -142,7 +169,7 @@
             "id": "ana-008",
             "tipo": "analitica",
             "pergunta": "Quantos títulos dos Estados Unidos existem no dataset?",
-            "resposta_esperada": null,
+            "resposta_esperada": 2818,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df[df['country']=='United States'].shape[0]"
         },
@@ -150,7 +177,7 @@
             "id": "ana-009",
             "tipo": "analitica",
             "pergunta": "Qual o ano com maior número de lançamentos na Netflix?",
-            "resposta_esperada": null,
+            "resposta_esperada": 2018,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df['release_year'].value_counts().index[0]"
         },
@@ -158,7 +185,7 @@
             "id": "ana-010",
             "tipo": "analitica",
             "pergunta": "Quantos títulos têm classificação TV-MA?",
-            "resposta_esperada": null,
+            "resposta_esperada": 3207,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df[df['rating']=='TV-MA'].shape[0]"
         },
@@ -166,7 +193,7 @@
             "id": "ana-011",
             "tipo": "analitica",
             "pergunta": "Qual a proporção de filmes em relação ao total de títulos?",
-            "resposta_esperada": null,
+            "resposta_esperada": 69.62,
             "tipo_resposta": "numero_float",
             "observacao": "Substituir null por: round(df[df['type']=='Movie'].shape[0] / len(df) * 100, 2)"
         },
@@ -174,7 +201,11 @@
             "id": "ana-012",
             "tipo": "analitica",
             "pergunta": "Quais são as 3 classificações etárias mais comuns no dataset?",
-            "resposta_esperada": null,
+            "resposta_esperada": [
+                "TV-MA",
+                "TV-14",
+                "TV-PG"
+            ],
             "tipo_resposta": "lista_strings",
             "observacao": "Substituir null por: df['rating'].value_counts().head(3).index.tolist()"
         },
@@ -182,7 +213,7 @@
             "id": "ana-013",
             "tipo": "analitica",
             "pergunta": "Quantos títulos foram lançados antes do ano 2000?",
-            "resposta_esperada": null,
+            "resposta_esperada": 525,
             "tipo_resposta": "numero_inteiro",
             "observacao": "Substituir null por: df[df['release_year'] < 2000].shape[0]"
         },
@@ -190,7 +221,7 @@
             "id": "ana-014",
             "tipo": "analitica",
             "pergunta": "Qual país produziu mais séries de TV?",
-            "resposta_esperada": null,
+            "resposta_esperada": "United States",
             "tipo_resposta": "categorica",
             "observacao": "Substituir null por: df[df['type']=='TV Show']['country'].value_counts().index[0]"
         },
@@ -198,7 +229,7 @@
             "id": "ana-015",
             "tipo": "analitica",
             "pergunta": "Qual o desvio padrão do ano de lançamento de todos os títulos?",
-            "resposta_esperada": null,
+            "resposta_esperada": 8.82,
             "tipo_resposta": "numero_float",
             "observacao": "Substituir null por: round(df['release_year'].std(), 2)"
         },
