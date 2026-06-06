@@ -2,74 +2,63 @@
 Cliente da API do LLM.
 
 Encapsula a chamada à API para que o resto do código não precise
-saber qual provedor está sendo usado. Se quiserem trocar de provedor,
-mexem APENAS aqui.
+saber qual provedor está sendo usado.
 
-Este arquivo já vem implementado para a API da Anthropic.
-Para usar outros provedores, criem variantes (LLMClientOpenAI etc).
+Suporta Anthropic (Claude) e DeepSeek.
 """
 
 from __future__ import annotations
 from dataclasses import dataclass
 import time
 
-from anthropic import Anthropic
-
 from config import (
     ANTHROPIC_API_KEY,
     LLM_MODEL,
     MAX_TOKENS_PER_RESPONSE,
+    DEEPSEEK_API_KEY,
 )
+USE_DEEPSEEK = bool(DEEPSEEK_API_KEY)
 
-
-# ============================================================
-# Estruturas de retorno
-# ============================================================
 
 @dataclass
 class LLMResponse:
-    """Resposta tipada do LLM, independente do provedor."""
-    text: str                          # Texto livre gerado (pode ser vazio)
-    tool_calls: list[dict]             # Lista de chamadas de tool (pode ser vazia)
-    raw_response: object               # Resposta crua do SDK (para debug)
-    input_tokens: int                  # Tokens enviados
-    output_tokens: int                 # Tokens gerados
-    stop_reason: str                   # 'end_turn', 'tool_use', etc.
-    latency_seconds: float             # Tempo da chamada
+    text: str
+    tool_calls: list[dict]
+    raw_response: object
+    input_tokens: int
+    output_tokens: int
+    stop_reason: str
+    latency_seconds: float
 
-
-# ============================================================
-# Cliente Anthropic
-# ============================================================
 
 class LLMClient:
-    """Cliente que se comunica com a API da Anthropic (Claude)."""
 
-    def __init__(self, model: str = LLM_MODEL, api_key: str = ANTHROPIC_API_KEY):
-        if not api_key:
-            raise RuntimeError(
-                "ANTHROPIC_API_KEY não definida. Configure no arquivo .env."
+    def __init__(self):
+        if USE_DEEPSEEK:
+            from openai import OpenAI
+            self.client = OpenAI(
+                api_key=DEEPSEEK_API_KEY,
+                base_url="https://api.deepseek.com",
             )
-        self.client = Anthropic(api_key=api_key)
-        self.model = model
+            self.model = "deepseek-chat"
+            self.provider = "deepseek"
+        else:
+            from anthropic import Anthropic
+            if not ANTHROPIC_API_KEY:
+                raise RuntimeError(
+                    "Nenhuma API key configurada. "
+                    "Defina ANTHROPIC_API_KEY ou DEEPSEEK_API_KEY no .env."
+                )
+            self.client = Anthropic(api_key=ANTHROPIC_API_KEY)
+            self.model = LLM_MODEL
+            self.provider = "anthropic"
 
-    def chat(
-        self,
-        messages: list[dict],
-        tools: list[dict],
-        system: str = "",
-    ) -> LLMResponse:
-        """
-        Envia uma rodada de mensagens ao LLM.
+    def chat(self, messages, tools, system="") -> LLMResponse:
+        if self.provider == "deepseek":
+            return self._chat_deepseek(messages, tools, system)
+        return self._chat_anthropic(messages, tools, system)
 
-        Args:
-            messages: histórico no formato Anthropic.
-            tools: lista de tools disponíveis (formato Anthropic).
-            system: prompt de sistema (instruções gerais do agente).
-
-        Returns:
-            LLMResponse com texto, chamadas de tool e métricas.
-        """
+    def _chat_anthropic(self, messages, tools, system) -> LLMResponse:
         kwargs = {
             "model": self.model,
             "max_tokens": MAX_TOKENS_PER_RESPONSE,
@@ -83,7 +72,6 @@ class LLMClient:
         resp = self.client.messages.create(**kwargs)
         latencia = time.perf_counter() - inicio
 
-        # Extrai blocos de texto e de tool_use da resposta
         texto = ""
         tool_calls = []
         for bloco in resp.content:
@@ -103,5 +91,56 @@ class LLMClient:
             input_tokens=resp.usage.input_tokens,
             output_tokens=resp.usage.output_tokens,
             stop_reason=resp.stop_reason,
+            latency_seconds=latencia,
+        )
+
+    def _chat_deepseek(self, messages, tools, system) -> LLMResponse:
+        if system:
+            messages = [{"role": "system", "content": system}] + messages
+
+        # Converte formato Anthropic de tools para OpenAI
+        tools_openai = [
+            {
+                "type": "function",
+                "function": {
+                    "name": t["name"],
+                    "description": t["description"],
+                    "parameters": t["input_schema"],
+                }
+            }
+            for t in tools
+        ]
+
+        inicio = time.perf_counter()
+        resp = self.client.chat.completions.create(
+            model=self.model,
+            max_tokens=MAX_TOKENS_PER_RESPONSE,
+            messages=messages,
+            tools=tools_openai if tools_openai else None,
+        )
+        latencia = time.perf_counter() - inicio
+
+        msg = resp.choices[0].message
+        texto = msg.content or ""
+        tool_calls = []
+
+        if msg.tool_calls:
+            import json
+            for tc in msg.tool_calls:
+                tool_calls.append({
+                    "id": tc.id,
+                    "name": tc.function.name,
+                    "input": json.loads(tc.function.arguments),
+                })
+
+        stop_reason = "tool_use" if tool_calls else "end_turn"
+
+        return LLMResponse(
+            text=texto,
+            tool_calls=tool_calls,
+            raw_response=resp,
+            input_tokens=resp.usage.prompt_tokens,
+            output_tokens=resp.usage.completion_tokens,
+            stop_reason=stop_reason,
             latency_seconds=latencia,
         )

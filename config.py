@@ -28,8 +28,8 @@ for d in [DATA_DIR, OUTPUTS_DIR, LOGS_DIR]:
 # ============================================================
 # DATASET
 # ============================================================
-# TODO: alterar para o arquivo CSV do seu grupo.
-DATASET_PATH = DATA_DIR / "exemplo.csv"
+# TODO: alterar para o arquivo CSV do seu grupo.(ALTERADO)
+DATASET_PATH = DATA_DIR / "netflix_titles.csv"
 
 # ============================================================
 # LLM
@@ -41,6 +41,7 @@ LLM_MODEL = os.getenv("LLM_MODEL", "claude-haiku-4-5")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 
 # ============================================================
 # AGENTE

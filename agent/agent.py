@@ -11,7 +11,7 @@ Implementa o loop de raciocínio:
         v
     LLM gerou tool_call? --- sim ---> [executa tool] --- adiciona resultado ---+
         |                                                                      |
-        | não (stop_reason == 'end_turn')                                       |
+        | não (stop_reason == 'end_turn')                                      |
         v                                                                      |
     [resposta final em texto]                                                  |
         ^                                                                      |
@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import json
 
-from .llm_client import LLMClient, LLMResponse
+from .llm_client import LLMClient, LLMResponse, USE_DEEPSEEK
 from tools import all_tools_for_llm, get_tool_by_name, state
 from config import MAX_AGENT_ITERATIONS
 
@@ -127,10 +127,8 @@ class Agent:
         try:
             return spec.function(**argumentos)
         except TypeError as e:
-            # Argumentos errados
             return {"erro": f"Argumentos inválidos para '{nome}': {e}"}
         except Exception as e:
-            # Qualquer outro erro
             return {"erro": f"Erro ao executar '{nome}': {type(e).__name__}: {e}"}
 
     def perguntar(self, pergunta: str) -> AgentResult:
@@ -154,7 +152,6 @@ class Agent:
                 latencia_total=0.0,
             )
 
-        # Histórico no formato Anthropic
         messages: list[dict] = [
             {"role": "user", "content": pergunta},
         ]
@@ -178,7 +175,6 @@ class Agent:
             total_output += resposta.output_tokens
             latencia_total += resposta.latency_seconds
 
-            # Registra o que o LLM "pensou"/disse
             if resposta.text:
                 trajetoria.append(Step(tipo="llm_text", conteudo=resposta.text))
 
@@ -197,36 +193,64 @@ class Agent:
                 )
 
             # Caso 2: LLM quer chamar uma ou mais tools
-            # Devemos adicionar ao histórico TODO o conteúdo retornado pelo LLM
-            # (texto + tool_uses), e em seguida os tool_results.
-            messages.append({
-                "role": "assistant",
-                "content": resposta.raw_response.content,
-            })
-
-            tool_results_para_llm = []
-            for tc in resposta.tool_calls:
-                total_tool_calls += 1
-                trajetoria.append(Step(
-                    tipo="tool_call",
-                    conteudo={"nome": tc["name"], "argumentos": tc["input"]},
-                ))
-
-                resultado = self._executar_tool(tc)
-
-                trajetoria.append(Step(tipo="tool_result", conteudo=resultado))
-
-                tool_results_para_llm.append({
-                    "type": "tool_result",
-                    "tool_use_id": tc["id"],
-                    "content": json.dumps(resultado, ensure_ascii=False, default=str),
+            if USE_DEEPSEEK:
+                # Formato OpenAI/DeepSeek
+                messages.append({
+                    "role": "assistant",
+                    "content": resposta.text or "",
+                    "tool_calls": [
+                        {
+                            "id": tc["id"],
+                            "type": "function",
+                            "function": {
+                                "name": tc["name"],
+                                "arguments": json.dumps(tc["input"], ensure_ascii=False),
+                            }
+                        }
+                        for tc in resposta.tool_calls
+                    ],
                 })
 
-            # Adiciona os resultados como mensagem do usuário (convenção Anthropic)
-            messages.append({
-                "role": "user",
-                "content": tool_results_para_llm,
-            })
+                for tc in resposta.tool_calls:
+                    total_tool_calls += 1
+                    trajetoria.append(Step(
+                        tipo="tool_call",
+                        conteudo={"nome": tc["name"], "argumentos": tc["input"]},
+                    ))
+                    resultado = self._executar_tool(tc)
+                    trajetoria.append(Step(tipo="tool_result", conteudo=resultado))
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc["id"],
+                        "content": json.dumps(resultado, ensure_ascii=False, default=str),
+                    })
+
+            else:
+                # Formato Anthropic
+                messages.append({
+                    "role": "assistant",
+                    "content": resposta.raw_response.content,
+                })
+
+                tool_results_para_llm = []
+                for tc in resposta.tool_calls:
+                    total_tool_calls += 1
+                    trajetoria.append(Step(
+                        tipo="tool_call",
+                        conteudo={"nome": tc["name"], "argumentos": tc["input"]},
+                    ))
+                    resultado = self._executar_tool(tc)
+                    trajetoria.append(Step(tipo="tool_result", conteudo=resultado))
+                    tool_results_para_llm.append({
+                        "type": "tool_result",
+                        "tool_use_id": tc["id"],
+                        "content": json.dumps(resultado, ensure_ascii=False, default=str),
+                    })
+
+                messages.append({
+                    "role": "user",
+                    "content": tool_results_para_llm,
+                })
 
         # Saiu do loop sem terminar — atingiu MAX_AGENT_ITERATIONS
         return AgentResult(
